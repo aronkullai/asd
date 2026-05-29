@@ -10,7 +10,7 @@ export default function TermsPage() {
     <main>
       <section className="border-b border-line bg-white py-16">
         <div className="mx-auto w-[min(100%-2rem,900px)]">
-          <SectionHeader eyebrow="Legal" title="Terms of Use" description="Placeholder terms structure. Replace with legal counsel-approved terms before launch." />
+          <SectionHeader eyebrow="Legal" title="Terms of Use" description="Core terms for using PromoGuard. Review with legal counsel before broad promotion." />
         </div>
       </section>
       <section className="py-12">

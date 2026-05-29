@@ -1,13 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { AdminPromoRefreshButton } from "@/components/AdminPromoRefreshButton";
+import { AdminPromoSourceSyncButton } from "@/components/AdminPromoSourceSyncButton";
 import { AdminPromoToggleButton } from "@/components/AdminPromoToggleButton";
-import { CasinoLogo } from "@/components/CasinoLogo";
+import { CasinoIcon } from "@/components/CasinoIcon";
 import { SectionHeader } from "@/components/SectionHeader";
-import { casinos } from "@/lib/casino-data";
+import { getCasinosWithDbOverrides } from "@/lib/casino-service";
 import { formatDate } from "@/lib/format";
-import { getBestPromoCodesForCasinoWithDb } from "@/lib/promo-code-db";
+import { prisma } from "@/lib/prisma";
 import { getCachedBusinessUnitSummary } from "@/lib/trustpilot";
+import { getCurrentUser } from "@/lib/auth";
 
 export const metadata: Metadata = {
   title: "Promo code finder"
@@ -18,15 +21,19 @@ type PageProps = {
 };
 
 export default async function AdminPromosPage({ searchParams }: PageProps) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
   const filters = await searchParams;
+  const casinoList = await getCasinosWithDbOverrides();
   const activeFilter = filters.active || "all";
   const sourceFilter = filters.source || "all";
 
   const rows = await Promise.all(
-    casinos.map(async (casino) => ({
+    casinoList.map(async (casino) => ({
       casino,
       trustpilot: await getCachedBusinessUnitSummary(casino.slug),
-      promos: await getBestPromoCodesForCasinoWithDb(casino.slug)
+      promos: await prisma.promoCode.findMany({ where: { casinoSlug: casino.slug }, orderBy: [{ isVerified: "desc" }, { lastUpdatedAt: "desc" }] }).catch(() => [])
     }))
   );
 
@@ -41,6 +48,9 @@ export default async function AdminPromosPage({ searchParams }: PageProps) {
             title="Promo code finder"
             description="Scan approved public promo pages, store discovered codes, and track Trustpilot snapshots. Protect this route with authentication before production launch."
           />
+          <Link href="/admin/promos/edit" className="mt-5 inline-flex min-h-11 items-center justify-center rounded-card bg-accent px-4 py-3 font-extrabold text-white hover:bg-accent-dark hover:text-white hover:no-underline">
+            Add or edit real codes
+          </Link>
         </div>
       </section>
       <section className="py-10">
@@ -81,7 +91,7 @@ export default async function AdminPromosPage({ searchParams }: PageProps) {
                       <tr key={casino.slug} className="align-top">
                         <td className="px-4 py-4">
                           <div className="flex items-center gap-3">
-                            <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
+                            <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
                             <div>
                               <span className="block font-black text-navy">{casino.name}</span>
                               <span className="text-xs text-muted">{casino.slug}</span>
@@ -119,7 +129,7 @@ export default async function AdminPromosPage({ searchParams }: PageProps) {
                         </td>
                         <td className="px-4 py-4 text-muted">
                           {filteredPromos.length
-                            ? filteredPromos.map((promo) => (promo.validUntil ? formatDate(promo.validUntil) : "-")).join(", ")
+                            ? filteredPromos.map((promo) => (promo.validUntil ? formatDate(promo.validUntil.toISOString()) : "-")).join(", ")
                             : "-"}
                         </td>
                         <td className="px-4 py-4 text-muted">
@@ -128,12 +138,13 @@ export default async function AdminPromosPage({ searchParams }: PageProps) {
                             .filter(Boolean)
                             .sort()
                             .at(-1)
-                            ? formatDate(filteredPromos.map((promo) => promo.lastCheckedAt).filter(Boolean).sort().at(-1)!)
+                            ? formatDate(filteredPromos.map((promo) => promo.lastCheckedAt.toISOString()).filter(Boolean).sort().at(-1)!)
                             : "Not checked"}
                         </td>
                         <td className="px-4 py-4">
                           <div className="grid gap-2">
                             <AdminPromoRefreshButton casinoSlug={casino.slug} />
+                            <AdminPromoSourceSyncButton casinoSlug={casino.slug} />
                             {filteredPromos
                               .filter((promo) => !promo.isAffiliateOwned)
                               .map((promo) => (

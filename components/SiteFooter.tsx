@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { NordVpnReferral } from "@/components/NordVpnReferral";
+import { SocialLinks } from "@/components/SocialLinks";
 import { siteConfig } from "@/lib/site";
 
 export function SiteFooter() {
@@ -8,6 +10,8 @@ export function SiteFooter() {
         <Link href="/" className="text-lg font-black text-white hover:no-underline">
           PromoGuard
         </Link>
+        <NordVpnReferral compact />
+        <SocialLinks />
         <nav className="flex flex-wrap gap-x-5 gap-y-2 text-sm font-bold" aria-label="Footer navigation">
           <Link href="/about">About</Link>
           <Link href="/contact">Contact</Link>

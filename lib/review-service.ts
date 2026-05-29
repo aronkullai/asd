@@ -1,4 +1,3 @@
-import { getReviewsForCasino } from "@/lib/casino-data";
 import { prisma } from "@/lib/prisma";
 import type { Review } from "@/lib/types";
 
@@ -41,7 +40,7 @@ export function normalizeReview(review: {
 
 export async function getPublishedReviewsForCasino(slug: string) {
   if (!hasUsableDatabaseUrl()) {
-    return getReviewsForCasino(slug);
+    return [];
   }
 
   const reviews = await prisma.review.findMany({
@@ -52,7 +51,6 @@ export async function getPublishedReviewsForCasino(slug: string) {
     return [];
   });
 
-  if (!reviews.length) return getReviewsForCasino(slug);
   return reviews.map(normalizeReview);
 }
 

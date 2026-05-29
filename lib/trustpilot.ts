@@ -198,10 +198,10 @@ export async function getCachedBusinessUnitSummary(slug: string): Promise<Trustp
         ? await resolveBusinessUnitIdFromDomain(config.domain)
         : null;
 
-  if (!businessUnitId) return null;
+  if (!businessUnitId) return getManualTrustpilotSummary(slug);
 
   const summary = await getBusinessUnitSummary(businessUnitId, config.profileUrl);
-  if (!summary) return null;
+  if (!summary) return getManualTrustpilotSummary(slug);
 
   memorySummaryCache.set(cacheKey, { data: summary, expiresAt: now + cacheTtlMs() });
 
@@ -233,9 +233,28 @@ export async function getCachedBusinessUnitSummary(slug: string): Promise<Trustp
   return summary;
 }
 
+async function getManualTrustpilotSummary(slug: string): Promise<TrustpilotSummary | null> {
+  if (!hasUsableDatabaseUrl()) return null;
+  const cached = await prisma.trustpilotMeta.findUnique({ where: { casinoSlug: slug } }).catch(() => null);
+  if (!cached || isPlaceholder(cached.score) || isPlaceholder(cached.reviewCount)) return null;
+
+  const trustScore = Number(cached.score);
+  const reviewCount = Number(cached.reviewCount);
+  if (Number.isNaN(trustScore) || Number.isNaN(reviewCount)) return null;
+
+  return {
+    businessUnitId: cached.businessUnitId || "",
+    trustScore,
+    stars: Number(cached.stars || cached.score),
+    reviewCount,
+    profileUrl: cached.profileUrl || null,
+    lastFetchedAt: (cached.lastFetchedAt || cached.lastUpdatedAt).toISOString()
+  };
+}
+
 export async function getCachedLatestReviews(slug: string, limit = 5): Promise<TrustpilotReview[] | null> {
   const summary = await getCachedBusinessUnitSummary(slug);
-  if (!summary) return null;
+  if (!summary) return getManualTrustpilotReviews(slug, limit);
 
   const now = Date.now();
   const cacheKey = `reviews:${slug}:${limit}`;
@@ -250,7 +269,7 @@ export async function getCachedLatestReviews(slug: string, limit = 5): Promise<T
   }
 
   const reviews = await getLatestReviews(summary.businessUnitId, { limit });
-  if (!reviews) return null;
+  if (!reviews) return getManualTrustpilotReviews(slug, limit);
 
   memoryReviewCache.set(cacheKey, { data: reviews, expiresAt: now + cacheTtlMs() });
 
@@ -266,4 +285,25 @@ export async function getCachedLatestReviews(slug: string, limit = 5): Promise<T
   }
 
   return reviews;
+}
+
+async function getManualTrustpilotReviews(slug: string, limit: number): Promise<TrustpilotReview[] | null> {
+  if (!hasUsableDatabaseUrl()) return null;
+  const reviews = await prisma.review.findMany({
+    where: { casinoSlug: slug, source: { contains: "Trustpilot", mode: "insensitive" } },
+    orderBy: [{ isHighlighted: "desc" }, { reviewedAt: "desc" }],
+    take: limit
+  }).catch(() => []);
+
+  if (!reviews.length) return null;
+
+  return reviews.map((review) => ({
+    id: review.id,
+    stars: review.rating,
+    title: review.title || "Trustpilot review",
+    text: review.body || review.text,
+    createdAt: review.reviewedAt.toISOString(),
+    consumerName: review.authorName || review.reviewerName,
+    reviewUrl: review.externalUrl || undefined
+  }));
 }

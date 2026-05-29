@@ -2,13 +2,16 @@ import Link from "next/link";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleInfo, faDice, faShieldHalved, faTriangleExclamation, faUserCheck } from "@fortawesome/free-solid-svg-icons";
 import { AffiliateButton } from "@/components/AffiliateButton";
-import { CasinoLogo } from "@/components/CasinoLogo";
-import { PromoCodeBadge } from "@/components/PromoCodeBadge";
+import { CasinoIcon } from "@/components/CasinoIcon";
+import { ClickablePromoCodeBadge } from "@/components/ClickablePromoCodeBadge";
+import { NordVpnReferral } from "@/components/NordVpnReferral";
 import { SectionHeader } from "@/components/SectionHeader";
+import { SocialLinks } from "@/components/SocialLinks";
 import { TrustBadges } from "@/components/TrustBadges";
-import { casinos } from "@/lib/casino-data";
+import { getCasinosWithDbOverrides } from "@/lib/casino-service";
 import { getBestPromoCodesForCasinoWithDb } from "@/lib/promo-code-db";
 import { getConfiguredAffiliateLink } from "@/lib/promo-code-service";
+import type { DisplayPromoCode } from "@/lib/types";
 
 const features = [
   {
@@ -33,11 +36,26 @@ const features = [
   }
 ];
 
+function toPublicPromo(promo: DisplayPromoCode): DisplayPromoCode {
+  return {
+    ...promo,
+    source: "Reviewed offer",
+    sourceId: undefined,
+    sourceSiteId: undefined
+  };
+}
+
 export default async function HomePage() {
+  const casinoList = await getCasinosWithDbOverrides();
   const promoEntries = await Promise.all(
-    casinos.map(async (casino) => ({ casino, promo: (await getBestPromoCodesForCasinoWithDb(casino.slug))[0] }))
+    casinoList.map(async (casino) => {
+      const promo = (await getBestPromoCodesForCasinoWithDb(casino.slug))[0];
+      return { casino, promo: promo ? toPublicPromo(promo) : null };
+    })
   );
-  const topPromos = promoEntries.filter((item) => Boolean(item.promo)).slice(0, 3);
+  const topPromos = promoEntries
+    .filter((item): item is { casino: (typeof casinoList)[number]; promo: DisplayPromoCode } => Boolean(item.promo))
+    .slice(0, 3);
 
   return (
     <main>
@@ -49,7 +67,7 @@ export default async function HomePage() {
               Trusted Casino Ratings Powered by Real Reviews
             </h1>
             <p className="mt-5 max-w-2xl text-lg text-slate-700 md:text-xl">
-              PromoGuard uses independent review criteria and Trustpilot data placeholders to surface safer casino choices, clearer promo terms, and quick offer checks.
+              PromoGuard uses independent review criteria, manually curated reviews, and verified offer records to surface safer casino choices and clearer promo terms.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <Link href="/casinos" className="inline-flex min-h-12 items-center justify-center rounded-card bg-accent px-5 py-3 font-extrabold text-white transition hover:bg-accent-dark hover:text-white hover:no-underline">
@@ -61,13 +79,13 @@ export default async function HomePage() {
             </div>
           </div>
           <aside className="grid gap-3 rounded-card border border-line bg-white p-5 shadow-trust">
-            {casinos.slice(0, 4).map((casino) => (
+            {casinoList.slice(0, 4).map((casino) => (
               <div key={casino.id} className="flex items-center justify-between gap-4 rounded-card border border-line bg-soft p-3">
                 <div className="flex items-center gap-3">
-                  <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
+                  <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
                   <div>
                     <strong className="block text-navy">{casino.name}</strong>
-                    <span className="text-sm text-muted">Promo code ready</span>
+                    <span className="text-sm text-muted">Offer review ready</span>
                   </div>
                 </div>
                 <span className="font-black text-accent-dark">{casino.rating.toFixed(1)}</span>
@@ -94,6 +112,12 @@ export default async function HomePage() {
         </div>
       </section>
 
+      <section className="bg-soft py-10">
+        <div className="mx-auto w-[min(100%-2rem,1180px)]">
+          <NordVpnReferral />
+        </div>
+      </section>
+
       <section className="bg-soft py-20">
         <div className="mx-auto w-[min(100%-2rem,1180px)]">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
@@ -107,18 +131,18 @@ export default async function HomePage() {
               {topPromos.map(({ promo, casino }) => (
                 <article key={promo.id} className="grid gap-4 rounded-card border border-line bg-white p-5 shadow-sm">
                   <div className="flex items-center gap-3">
-                    <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
+                    <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
                     <h2 className="text-xl font-black text-navy">{casino.name}</h2>
                   </div>
-                  <PromoCodeBadge code={promo.code} />
+                  <ClickablePromoCodeBadge casinoName={casino.name} casinoSummary={casino.summary} affiliateLink={getConfiguredAffiliateLink(casino.slug)} promo={promo} />
                   <p className="text-sm text-muted">Open the offer, confirm the terms, and use the code only if it matches the current casino cashier flow.</p>
-                  <AffiliateButton casinoName={casino.name} affiliateLink={getConfiguredAffiliateLink(casino.slug)} promoCode={promo.code} label="View offer" />
+                  <AffiliateButton casinoName={casino.name} casinoSlug={casino.slug} affiliateLink={getConfiguredAffiliateLink(casino.slug)} promoCode={promo.code} />
                 </article>
               ))}
             </div>
           ) : (
             <div className="rounded-card border border-dashed border-line bg-white p-6 text-muted">
-              No promo codes are configured yet. Add owned codes in <code>config/affiliateConfig.ts</code> or verified external codes through the researcher.
+              No verified promo codes are live yet. Add real codes in the admin promo editor and mark them verified when the source has been checked.
             </div>
           )}
         </div>
@@ -128,12 +152,18 @@ export default async function HomePage() {
         <div className="mx-auto w-[min(100%-2rem,1180px)]">
           <SectionHeader eyebrow="Trust signals" title="Built for transparent casino comparison" center />
           <TrustBadges />
-          <div className="mt-8 rounded-card border border-blue-100 bg-blue-50 p-5 text-blue-950">
-            <div className="flex gap-3">
-              <FontAwesomeIcon icon={faUserCheck} className="mt-1 h-5 w-5 text-blue-800" aria-hidden="true" />
-              <p className="m-0">
-                PromoGuard is 18+ only. Always read casino terms, check current Trustpilot reviews yourself, and never gamble with money you cannot afford to lose.
-              </p>
+          <div className="mt-8 grid gap-4 lg:grid-cols-[1fr_auto]">
+            <div className="rounded-card border border-blue-100 bg-blue-50 p-5 text-blue-950">
+              <div className="flex gap-3">
+                <FontAwesomeIcon icon={faUserCheck} className="mt-1 h-5 w-5 text-blue-800" aria-hidden="true" />
+                <p className="m-0">
+                  PromoGuard is 18+ only. Always read casino terms, check current Trustpilot reviews yourself, and never gamble with money you cannot afford to lose.
+                </p>
+              </div>
+            </div>
+            <div className="rounded-card border border-line bg-white p-5 shadow-sm">
+              <p className="mb-3 text-xs font-black uppercase tracking-wide text-accent-dark">Community channels</p>
+              <SocialLinks showLabels />
             </div>
           </div>
         </div>

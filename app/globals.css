@@ -16,6 +16,8 @@
   --pg-accent-dark: #14755b;
   --pg-blue-link: #1e40af;
   --pg-focus: rgba(31, 157, 122, 0.28);
+  --pg-glow: rgba(31, 157, 122, 0.18);
+  --pg-hot: #f59e0b;
 }
 
 .dark {
@@ -32,6 +34,8 @@
   --pg-accent-dark: #86e0c1;
   --pg-blue-link: #93c5fd;
   --pg-focus: rgba(95, 203, 169, 0.36);
+  --pg-glow: rgba(95, 203, 169, 0.2);
+  --pg-hot: #fbbf24;
 }
 
 * {
@@ -50,6 +54,26 @@ body {
 
 a {
   color: inherit;
+}
+
+.bg-accent {
+  background-image: linear-gradient(135deg, var(--pg-accent), #27b894);
+  box-shadow: 0 10px 24px var(--pg-glow);
+}
+
+.bg-accent:hover {
+  box-shadow: 0 16px 32px var(--pg-glow);
+}
+
+.shadow-sm,
+.shadow-trust {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+}
+
+article.shadow-sm:hover,
+.rounded-card.shadow-sm:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 45px rgba(15, 23, 42, 0.1);
 }
 
 button,

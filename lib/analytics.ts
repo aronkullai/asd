@@ -26,3 +26,20 @@ export function trackAffiliateClick(payload: AffiliateClickPayload) {
     keepalive: true
   }).catch(() => undefined);
 }
+
+export function trackPromoCodeClick(payload: { casinoName: string; casinoSlug: string; promoCode: string; source?: string }) {
+  const event = {
+    type: "promo-code-click",
+    ...payload,
+    timestamp: new Date().toISOString()
+  };
+
+  console.log("[analytics] promo-code-click", event);
+
+  fetch("/api/analytics/track", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(event),
+    keepalive: true
+  }).catch(() => undefined);
+}

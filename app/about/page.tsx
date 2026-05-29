@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { CasinoLogo } from "@/components/CasinoLogo";
 import { SectionHeader } from "@/components/SectionHeader";
+import { SocialLinks } from "@/components/SocialLinks";
 import { TrustBadges } from "@/components/TrustBadges";
 
 export const metadata: Metadata = {
@@ -28,18 +28,15 @@ export default function AboutPage() {
             </p>
           </div>
           <div className="rounded-card border border-line bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-black text-navy">Team placeholders</h2>
-            <div className="mt-4 grid gap-3">
-              {["Founder / partnerships", "Casino reviewer", "Compliance reviewer"].map((role) => (
-                <div key={role} className="flex items-center gap-3 rounded-card border border-line bg-soft p-3">
-                  <CasinoLogo text={role.slice(0, 2).toUpperCase()} size="sm" />
-                  <div>
-                    <strong className="block text-navy">Add team member name</strong>
-                    <span className="text-sm text-muted">{role}</span>
-                  </div>
-                </div>
-              ))}
-            </div>
+            <h2 className="text-2xl font-black text-navy">How we verify offers</h2>
+            <p className="mt-3 text-muted">
+              Promo codes are shown only after an admin adds them from an external bonus source or approved API and marks them reviewed. The scheduled checker refreshes expiry, usage, and backend source-page signals without showing source-site names publicly.
+            </p>
+          </div>
+          <div className="rounded-card border border-line bg-slate-950 p-6 text-white shadow-sm lg:col-span-2">
+            <h2 className="text-2xl font-black">Join the community</h2>
+            <p className="mt-3 max-w-2xl text-slate-300">Discord, Telegram, and X links appear here once configured in environment variables.</p>
+            <SocialLinks className="mt-5" showLabels />
           </div>
         </div>
       </section>

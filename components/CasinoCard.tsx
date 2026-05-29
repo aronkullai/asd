@@ -4,8 +4,8 @@ import { faCheckCircle, faClock, faHeadset, faIdCard, faMoneyBillTransfer } from
 import type { Casino, TrustpilotSummary } from "@/lib/types";
 import { payoutSpeedLabel } from "@/lib/format";
 import { AffiliateButton } from "@/components/AffiliateButton";
-import { CasinoLogo } from "@/components/CasinoLogo";
-import { PromoCodeBadge } from "@/components/PromoCodeBadge";
+import { CasinoIcon } from "@/components/CasinoIcon";
+import { ClickablePromoCodeBadge } from "@/components/ClickablePromoCodeBadge";
 import { RatingStars } from "@/components/RatingStars";
 import { TrustpilotBadge } from "@/components/TrustpilotBadge";
 import { getBestPromoCodesForCasino, getConfiguredAffiliateLink } from "@/lib/promo-code-service";
@@ -21,13 +21,20 @@ type CasinoCardProps = {
 export function CasinoCard({ casino, rank, bestPromos, trustpilotSummary }: CasinoCardProps) {
   const affiliateLink = getConfiguredAffiliateLink(casino.slug);
   const promos = bestPromos ?? getBestPromoCodesForCasino(casino.slug);
-  const topPromo = promos[0];
+  const topPromo = promos[0]
+    ? {
+        ...promos[0],
+        source: "Reviewed offer",
+        sourceId: undefined,
+        sourceSiteId: undefined
+      }
+    : undefined;
 
   return (
     <article className="grid gap-5 rounded-card border border-line bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-trust">
       <div className="grid gap-4 md:grid-cols-[1fr_auto] md:items-start">
         <div className="flex min-w-0 items-center gap-4">
-          <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} />
+          <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} />
           <div>
             <div className="mb-1 flex flex-wrap items-center gap-2">
               {rank ? (
@@ -74,9 +81,9 @@ export function CasinoCard({ casino, rank, bestPromos, trustpilotSummary }: Casi
 
       {topPromo ? (
         <div className="grid gap-3 rounded-card border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-4 md:grid-cols-[220px_1fr] md:items-center">
-          <PromoCodeBadge code={topPromo.code} />
+          <ClickablePromoCodeBadge casinoName={casino.name} casinoSummary={casino.summary} affiliateLink={affiliateLink} promo={topPromo} />
           <p className="m-0 text-sm font-semibold text-amber-950">
-            {topPromo.isAffiliateOwned ? "Highlighted offer code." : "Public third-party promo code."} Check the current terms before using it.
+            {topPromo.benefitTitle || topPromo.label}. Check the current terms before using it.
           </p>
         </div>
       ) : null}

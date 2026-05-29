@@ -10,28 +10,8 @@ export function getConfiguredAffiliateLink(slug: string) {
 }
 
 export function getAffiliatePromoCodesForCasino(slug: string): DisplayPromoCode[] {
-  const config = getAffiliateConfigBySlug(slug);
-
-  if (!config?.affiliatePromoCodes?.length) return [];
-
-  return config.affiliatePromoCodes
-    .filter((promo) => promo.code.trim().length > 0 && !isPlaceholder(promo.code))
-    .map((promo, index) => ({
-      id: `affiliate-${slug}-${promo.code}-${index}`,
-      casinoSlug: slug,
-      code: promo.code,
-      label: promo.label,
-      description: promo.description,
-      conditions: promo.conditions,
-      source: "PromoGuard",
-      sourceId: "AffiliateConfig",
-      isAffiliateOwned: true,
-      isActive: true,
-      priority: promo.priority ?? 0,
-      validUntil: null,
-      lastCheckedAt: null,
-      lastUpdatedAt: null
-    }));
+  void slug;
+  return [];
 }
 
 export function getStaticExternalPromoCodesForCasino(slug: string): DisplayPromoCode[] {
@@ -63,13 +43,26 @@ export function externalToDisplayPromo(promo: ExternalPromoCode): DisplayPromoCo
     casinoSlug: promo.casinoSlug,
     code: promo.code,
     label: promo.label,
+    benefit: promo.benefit || promo.description || promo.label,
+    benefitTitle: promo.benefitTitle || promo.label,
+    benefitDescription: promo.benefitDescription || promo.description || null,
+    bonusType: promo.bonusType || null,
+    minDeposit: promo.minDeposit ?? null,
+    wageringRequirements: promo.wageringRequirements || promo.conditions || null,
     description: promo.description,
     conditions: promo.conditions,
     source: promo.source,
-    isAffiliateOwned: false,
+    sourceId: promo.sourceId,
+    sourceSiteId: promo.sourceSiteId,
+    isAffiliateOwned: Boolean(promo.isAffiliateOwned),
     priority: promo.priority ?? 0,
     estimatedValue: promo.estimatedValue,
+    validFrom: promo.validFrom ?? null,
     validUntil: promo.validUntil ?? null,
+    maxUses: promo.maxUses ?? null,
+    usesSoFar: promo.usesSoFar ?? 0,
+    region: promo.region ?? null,
+    isVerified: promo.isVerified ?? false,
     isActive: promo.isActive ?? true,
     lastCheckedAt: promo.lastCheckedAt,
     lastUpdatedAt: promo.lastUpdatedAt

@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginRequest } from "@/lib/request-security";
 
 function hasUsableDatabaseUrl() {
   const url = process.env.DATABASE_URL || "";
@@ -7,6 +9,13 @@ function hasUsableDatabaseUrl() {
 }
 
 export async function POST(request: Request) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ error: "Invalid request origin" }, { status: 403 });
+  }
+
   if (!hasUsableDatabaseUrl()) {
     return NextResponse.json({ error: "DATABASE_URL is not configured" }, { status: 503 });
   }

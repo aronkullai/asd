@@ -17,6 +17,8 @@ export type CasinoLogoConfig = {
   glint?: string;
   imageSrc?: string;
   imageAlt?: string;
+  lightImageSrc?: string;
+  darkImageSrc?: string;
 };
 
 export type PromoCode = {
@@ -25,16 +27,26 @@ export type PromoCode = {
   code: string;
   label: string;
   benefit: string;
+  benefitTitle?: string;
+  benefitDescription?: string | null;
+  bonusType?: string | null;
+  minDeposit?: number | null;
+  wageringRequirements?: string | null;
   description?: string;
   conditions?: string;
   source: string;
   sourceId?: string;
+  sourceSiteId?: string | null;
   isAffiliateOwned: boolean;
   priority?: number;
   estimatedValue?: number;
   requirements: string;
   validFrom?: string;
   validUntil?: string;
+  maxUses?: number | null;
+  usesSoFar?: number;
+  region?: string | null;
+  isVerified?: boolean;
   discoveredAt?: string;
   isActive: boolean;
   lastCheckedAt: string;
@@ -46,13 +58,26 @@ export type ExternalPromoCode = {
   casinoSlug: string;
   code: string;
   label: string;
+  benefit?: string;
+  benefitTitle?: string;
+  benefitDescription?: string | null;
+  bonusType?: string | null;
+  minDeposit?: number | null;
+  wageringRequirements?: string | null;
   description?: string;
   conditions?: string;
   source: string;
   sourceId?: string;
+  sourceSiteId?: string | null;
+  isAffiliateOwned?: boolean;
   priority?: number;
   estimatedValue?: number;
   validUntil?: string | null;
+  validFrom?: string | null;
+  maxUses?: number | null;
+  usesSoFar?: number;
+  region?: string | null;
+  isVerified?: boolean;
   isActive?: boolean;
   lastCheckedAt: string | null;
   lastUpdatedAt: string | null;
@@ -107,10 +132,14 @@ export type Casino = {
   trustpilot: TrustpilotMeta;
   highlights: string[];
   regulator: string;
+  licenseInfo?: string;
+  areaRegulations?: string;
   payoutSpeed: PayoutSpeed;
   payoutSummary: string;
   bonusOverview: string;
   supportQuality: string;
+  supportChannels?: string[];
+  safetyFeatures?: string[];
   gameSelection: string;
   summary: string;
   pros: string[];
@@ -118,6 +147,7 @@ export type Casino = {
   paymentMethods: string[];
   securityNotes: string[];
   supportNotes: string[];
+  reviewNote?: string;
   fetchMetadata: {
     sourceType: "manual" | "api" | "rss" | "html";
     sourceUrl: string;

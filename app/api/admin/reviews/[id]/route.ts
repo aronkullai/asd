@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginRequest } from "@/lib/request-security";
 
 type RouteProps = {
   params: Promise<{ id: string }>;
@@ -11,6 +13,13 @@ function hasUsableDatabaseUrl() {
 }
 
 export async function PUT(request: Request, { params }: RouteProps) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ ok: false, error: "Invalid request origin." }, { status: 403 });
+  }
+
   if (!hasUsableDatabaseUrl()) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
   }
@@ -42,7 +51,14 @@ export async function PUT(request: Request, { params }: RouteProps) {
   return NextResponse.json({ ok: true, review });
 }
 
-export async function DELETE(_request: Request, { params }: RouteProps) {
+export async function DELETE(request: Request, { params }: RouteProps) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ ok: false, error: "Invalid request origin." }, { status: 403 });
+  }
+
   if (!hasUsableDatabaseUrl()) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
   }

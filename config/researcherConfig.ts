@@ -1,34 +1,29 @@
-export type ResearcherSourceId = "PublicPromoPage";
-
 export type CasinoResearcherConfig = {
   slug: string;
-  enabledSources: ResearcherSourceId[];
   sourceUrls?: string[];
 };
 
 export const researcherConfig = {
-  intervalMinutes: Number(process.env.PROMO_RESEARCHER_INTERVAL_MINUTES || 30),
-  maxRetriesPerRun: Number(process.env.PROMO_RESEARCHER_MAX_RETRIES || 2),
-  delayBetweenCallsMs: Number(process.env.PROMO_RESEARCHER_DELAY_MS || 500),
-  enabledSources: ["PublicPromoPage"] satisfies ResearcherSourceId[],
+  intervalHours: Number(process.env.PROMO_RESEARCHER_INTERVAL_HOURS || 12),
+  requestTimeoutMs: Number(process.env.PROMO_RESEARCHER_TIMEOUT_MS || 8000),
+  delayBetweenChecksMs: Number(process.env.PROMO_RESEARCHER_DELAY_MS || 500),
   casinos: [
-    { slug: "stake", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "rainbet", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "roobet", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "celsius-casino", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "spartans-casino", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "shuffle", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "bc-game", enabledSources: ["PublicPromoPage"], sourceUrls: [] },
-    { slug: "bitcasino", enabledSources: ["PublicPromoPage"], sourceUrls: [] }
+    { slug: "stake", sourceUrls: [] },
+    { slug: "rainbet", sourceUrls: [] },
+    { slug: "roobet", sourceUrls: [] },
+    { slug: "celsius-casino", sourceUrls: [] },
+    { slug: "spartans-casino", sourceUrls: [] },
+    { slug: "shuffle", sourceUrls: [] },
+    { slug: "bc-game", sourceUrls: [] },
+    { slug: "bitcasino", sourceUrls: [] },
+    { slug: "gamdom", sourceUrls: ["https://help.gamdom.com/en/articles/10290516-gamdom-rewards"] },
+    { slug: "justcasino", sourceUrls: [] },
+    { slug: "betpanda", sourceUrls: [] }
   ] satisfies CasinoResearcherConfig[]
 };
 
 export function getResearcherCronExpression() {
-  return `*/${researcherConfig.intervalMinutes} * * * *`;
-}
-
-export function getEnabledSourcesForCasino(slug: string) {
-  return researcherConfig.casinos.find((casino) => casino.slug === slug)?.enabledSources ?? researcherConfig.enabledSources;
+  return `0 */${researcherConfig.intervalHours} * * *`;
 }
 
 export function getPromoSourceUrlsForCasino(slug: string) {

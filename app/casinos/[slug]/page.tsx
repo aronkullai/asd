@@ -3,18 +3,28 @@ import { notFound } from "next/navigation";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCircleCheck, faCircleXmark } from "@fortawesome/free-solid-svg-icons";
 import { AffiliateButton } from "@/components/AffiliateButton";
-import { CasinoLogo } from "@/components/CasinoLogo";
-import { PromoCodeBadge } from "@/components/PromoCodeBadge";
+import { CasinoIcon } from "@/components/CasinoIcon";
+import { ClickablePromoCodeBadge } from "@/components/ClickablePromoCodeBadge";
+import { HowToUseCode } from "@/components/HowToUseCode";
+import { NordVpnReferral } from "@/components/NordVpnReferral";
+import { PartnerBonusNote } from "@/components/PartnerBonusNote";
+import { PromoCodeCard } from "@/components/PromoCodeCard";
 import { RatingStars } from "@/components/RatingStars";
 import { ReviewList } from "@/components/ReviewList";
+import { UserRatingSection } from "@/components/UserRatingSection";
 import { TrustpilotReviewList } from "@/components/TrustpilotReviewList";
 import { TrustpilotBadge } from "@/components/TrustpilotBadge";
+import { getCodeUseGuide } from "@/config/howToUseCodes";
+import { getPartnerRegistrationBonus } from "@/config/partnerRegistrationBonuses";
 import { casinos, getCasinoBySlug } from "@/lib/casino-data";
-import { formatDate, payoutSpeedLabel } from "@/lib/format";
+import { getCasinoWithDbOverrides } from "@/lib/casino-service";
+import { payoutSpeedLabel } from "@/lib/format";
 import { getBestPromoCodesForCasinoWithDb } from "@/lib/promo-code-db";
 import { getConfiguredAffiliateLink } from "@/lib/promo-code-service";
 import { getPublishedReviewsForCasino } from "@/lib/review-service";
 import { getCachedBusinessUnitSummary, getCachedLatestReviews } from "@/lib/trustpilot";
+import { getCommunityRatingsForCasino } from "@/lib/user-rating-service";
+import type { DisplayPromoCode } from "@/lib/types";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -26,9 +36,18 @@ export function generateStaticParams() {
   return casinos.map((casino) => ({ slug: casino.slug }));
 }
 
+function toPublicPromo(promo: DisplayPromoCode): DisplayPromoCode {
+  return {
+    ...promo,
+    source: "Reviewed offer",
+    sourceId: undefined,
+    sourceSiteId: undefined
+  };
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const casino = getCasinoBySlug(slug);
+  const casino = await getCasinoWithDbOverrides(slug);
   return {
     title: casino ? `${casino.name} review` : "Casino review",
     description: casino?.summary,
@@ -49,12 +68,15 @@ export default async function CasinoDetailPage({ params }: PageProps) {
 
   if (!casino) notFound();
 
-  const promos = await getBestPromoCodesForCasinoWithDb(casino.slug);
+  const promos = (await getBestPromoCodesForCasinoWithDb(casino.slug)).map(toPublicPromo);
   const affiliateLink = getConfiguredAffiliateLink(casino.slug);
   const topPromo = promos[0];
   const internalReviews = await getPublishedReviewsForCasino(casino.slug);
   const trustpilotSummary = await getCachedBusinessUnitSummary(casino.slug);
   const trustpilotReviews = await getCachedLatestReviews(casino.slug, 5);
+  const communityRatings = await getCommunityRatingsForCasino(casino.slug);
+  const codeGuide = getCodeUseGuide(casino.slug);
+  const partnerBonus = getPartnerRegistrationBonus(casino.slug);
 
   return (
     <main className="bg-soft">
@@ -62,7 +84,7 @@ export default async function CasinoDetailPage({ params }: PageProps) {
         <div className="mx-auto grid w-[min(100%-2rem,1180px)] gap-8 lg:grid-cols-[1fr_360px]">
           <div className="flex flex-col gap-5">
             <div className="flex items-center gap-4">
-              <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} size="lg" />
+              <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} size="lg" />
               <div>
                 <p className="mb-1 text-xs font-black uppercase tracking-[0.12em] text-accent-dark">Casino review</p>
                 <h1 className="text-5xl font-black tracking-normal text-navy">{casino.name}</h1>
@@ -76,11 +98,12 @@ export default async function CasinoDetailPage({ params }: PageProps) {
           </div>
           <aside className="grid gap-4 rounded-card border border-line bg-white p-5 shadow-trust">
             <AffiliateButton casinoName={casino.name} affiliateLink={affiliateLink} promoCode={topPromo?.code} />
+            <PartnerBonusNote bonus={partnerBonus} />
             {topPromo ? (
               <div>
                 <p className="mb-2 text-sm font-black uppercase tracking-wide text-muted">Best promo code</p>
-                <PromoCodeBadge code={topPromo.code} />
-                <p className="mt-2 text-sm text-muted">Click our link first, then enter this code during sign-up.</p>
+                <ClickablePromoCodeBadge casinoName={casino.name} casinoSummary={casino.summary} affiliateLink={affiliateLink} promo={topPromo} />
+                <p className="mt-2 text-sm text-muted">Open the offer page, confirm the current terms, then enter this code during sign-up.</p>
               </div>
             ) : (
               <div className="rounded-card border border-dashed border-line bg-soft p-4 text-sm text-muted">
@@ -103,22 +126,12 @@ export default async function CasinoDetailPage({ params }: PageProps) {
 
           <Section id="bonuses" title="Bonuses & promo codes">
             <div className="grid gap-4">
+              <HowToUseCode guide={codeGuide} />
               {promos.length ? promos.map((promo) => (
-                <div key={promo.id} className="grid gap-4 rounded-card border border-line bg-white p-5 md:grid-cols-[220px_1fr_auto] md:items-center">
-                  <PromoCodeBadge code={promo.code} />
-                  <div>
-                    <p className={`mb-2 inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${promo.isAffiliateOwned ? "bg-emerald-100 text-emerald-900" : "bg-blue-100 text-blue-900"}`}>
-                      {promo.isAffiliateOwned ? "Highlighted code" : "Public third-party code"}
-                    </p>
-                    <h3 className="font-black text-navy">{promo.label}</h3>
-                    <p className="m-0 text-sm text-muted">{promo.description || promo.conditions || "Conditions pending verification"}</p>
-                    <p className="mt-2 text-xs font-bold text-muted">Last checked: {promo.lastCheckedAt ? formatDate(promo.lastCheckedAt) : "Manual config"}</p>
-                  </div>
-                  <AffiliateButton casinoName={casino.name} affiliateLink={affiliateLink} promoCode={promo.code} label="View offer" />
-                </div>
+                <PromoCodeCard key={promo.id} casinoName={casino.name} casinoSummary={casino.summary} affiliateLink={affiliateLink} promo={promo} />
               )) : (
                 <div className="rounded-card border border-dashed border-line bg-soft p-5 text-muted">
-                  No exclusive or external promo codes are available right now.
+                  No verified promo codes are available right now.
                 </div>
               )}
             </div>
@@ -135,14 +148,20 @@ export default async function CasinoDetailPage({ params }: PageProps) {
           <Section id="security" title="Security & licensing">
             <div className="grid gap-4 md:grid-cols-2">
               <Fact label="Regulator" value={casino.regulator} />
+              <Fact label="License notes" value={casino.licenseInfo || casino.regulator} />
+              <Fact label="Area restrictions" value={casino.areaRegulations || "Check local law and the casino's current terms before registering."} />
               <List title="Security notes" items={casino.securityNotes} positive />
+              <List title="Safety features" items={casino.safetyFeatures?.length ? casino.safetyFeatures : casino.securityNotes} positive />
+            </div>
+            <div className="mt-4">
+              <NordVpnReferral compact />
             </div>
           </Section>
 
           <Section id="support" title="Support & user experience">
             <div className="grid gap-4 md:grid-cols-2">
               <Fact label="Support quality" value={casino.supportQuality} />
-              <List title="Support notes" items={casino.supportNotes} positive />
+              <List title="Support channels" items={casino.supportChannels?.length ? casino.supportChannels : casino.supportNotes} positive />
             </div>
           </Section>
 
@@ -151,7 +170,11 @@ export default async function CasinoDetailPage({ params }: PageProps) {
           </Section>
 
           <Section id="reviews" title="What players say">
-            <ReviewList reviews={internalReviews} />
+            <ReviewList reviews={internalReviews} siteNote={casino.reviewNote} />
+          </Section>
+
+          <Section id="community" title="PromoGuard community rating">
+            <UserRatingSection casinoSlug={casino.slug} stats={communityRatings} />
           </Section>
 
           <section className="rounded-card bg-navy p-6 text-white">

@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 import { AdminReviewManager } from "@/components/AdminReviewManager";
+import { AdminTrustpilotMetaForm } from "@/components/AdminTrustpilotMetaForm";
 import { SectionHeader } from "@/components/SectionHeader";
-import { casinos } from "@/lib/casino-data";
+import { getCasinosWithDbOverrides } from "@/lib/casino-service";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -16,6 +19,10 @@ function hasUsableDatabaseUrl() {
 }
 
 export default async function AdminReviewsPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const casinos = await getCasinosWithDbOverrides();
+
   const reviews = hasUsableDatabaseUrl()
     ? await prisma.review.findMany({ orderBy: { reviewedAt: "desc" }, take: 100 }).catch(() => {
         return [];
@@ -29,12 +36,13 @@ export default async function AdminReviewsPage() {
           <SectionHeader
             eyebrow="Admin"
             title="Review manager"
-            description="Paste Trustpilot excerpts, user comments, ratings, and original links. PromoGuard does not scrape Trustpilot or use their API."
+            description="Paste Trustpilot excerpts, user comments, ratings, original links, and manual Trustpilot summary metrics. API data is used when configured."
           />
         </div>
       </section>
       <section className="py-10">
         <div className="mx-auto w-[min(100%-2rem,1180px)]">
+          <AdminTrustpilotMetaForm casinos={casinos} />
           <AdminReviewManager casinos={casinos} initialReviews={JSON.parse(JSON.stringify(reviews))} />
         </div>
       </section>

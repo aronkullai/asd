@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { casinos } from "@/lib/casino-data";
+import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { isSameOriginRequest } from "@/lib/request-security";
 
 function hasUsableDatabaseUrl() {
   const url = process.env.DATABASE_URL || "";
@@ -16,6 +18,10 @@ function parseRating(value: unknown) {
 }
 
 export async function GET(request: Request) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
   if (!hasUsableDatabaseUrl()) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
   }
@@ -39,6 +45,13 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  if (!(await getCurrentUser())) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+  if (!isSameOriginRequest(request)) {
+    return NextResponse.json({ ok: false, error: "Invalid request origin." }, { status: 403 });
+  }
+
   if (!hasUsableDatabaseUrl()) {
     return NextResponse.json({ ok: false, error: "DATABASE_URL is not configured." }, { status: 503 });
   }

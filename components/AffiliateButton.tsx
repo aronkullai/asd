@@ -21,10 +21,11 @@ export function AffiliateButton({
   affiliateLink,
   promoCode,
   className = "",
-  label = "Visit site",
+  label,
   source = "unknown"
 }: AffiliateButtonProps) {
   const outboundUrl = normalizeExternalUrl(affiliateLink);
+  const visibleLabel = label || `Register at ${casinoName}`;
 
   if (!outboundUrl) {
     return (
@@ -49,7 +50,7 @@ export function AffiliateButton({
       }}
       className={`inline-flex min-h-11 items-center justify-center gap-2 rounded-card bg-accent px-4 py-3 text-sm font-extrabold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-accent-dark hover:text-white hover:no-underline focus:outline-none focus:ring-4 focus:ring-accent/20 ${className}`}
     >
-      {label}
+      {visibleLabel}
       <FontAwesomeIcon icon={faArrowRight} className="h-4 w-4" aria-hidden="true" />
     </a>
   );

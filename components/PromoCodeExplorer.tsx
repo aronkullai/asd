@@ -13,7 +13,9 @@ import {
   faShieldHalved
 } from "@fortawesome/free-solid-svg-icons";
 import { AffiliateButton } from "@/components/AffiliateButton";
-import { CasinoLogo } from "@/components/CasinoLogo";
+import { CasinoIcon } from "@/components/CasinoIcon";
+import { PromoRegistrationModal } from "@/components/PromoRegistrationModal";
+import { trackPromoCodeClick } from "@/lib/analytics";
 import type { Casino, DisplayPromoCode } from "@/lib/types";
 
 type PromoGroup = {
@@ -45,6 +47,14 @@ function daysSince(value?: string | null) {
   return Math.max(0, Math.floor((Date.now() - timestamp) / 86_400_000));
 }
 
+function expiresSoon(value?: string | null) {
+  if (!value) return false;
+  const timestamp = Date.parse(value);
+  if (Number.isNaN(timestamp)) return false;
+  const days = Math.ceil((timestamp - Date.now()) / 86_400_000);
+  return days >= 0 && days <= 14;
+}
+
 function getConfidence(promo: DisplayPromoCode) {
   const agePenalty = Math.min(35, daysSince(promo.lastCheckedAt) * 2);
   const sourceBonus = promo.isAffiliateOwned ? 10 : 0;
@@ -64,11 +74,6 @@ function getPromoValue(promo: DisplayPromoCode) {
   if (/free spin/i.test(text)) return "Free spins";
   if (/cashback/i.test(text)) return "Cashback";
   return "Offer";
-}
-
-function maskCode(code: string) {
-  if (code.length <= 4) return `${code.slice(0, 1)}...`;
-  return `${code.slice(0, 2)}...${code.slice(-1)}`;
 }
 
 export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
@@ -93,7 +98,7 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
 
     return offers
       .filter(({ casino, promo, confidence }) => {
-        const matchesSearch = !search || [casino.name, casino.slug, promo.code, promo.label, promo.description, promo.source]
+        const matchesSearch = !search || [casino.name, casino.slug, promo.code, promo.label, promo.description, promo.benefitTitle, promo.bonusType]
           .filter(Boolean)
           .some((value) => String(value).toLowerCase().includes(search));
         const matchesMode =
@@ -130,16 +135,16 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
           <div>
             <p className="mb-2 text-xs font-black uppercase tracking-[0.12em] text-accent-dark">Offer intelligence</p>
             <h1 className="max-w-3xl text-4xl font-black tracking-normal text-navy md:text-5xl">
-              Casino codes with source signals, not guesswork
+              Source-checked casino codes with clear bonus details
             </h1>
             <p className="mt-4 max-w-2xl text-lg text-muted">
-              Search casinos, reveal codes, compare confidence, and open the offer page only after the terms look clean.
+              Search casinos, copy source-checked codes, and open the offer page only after the current terms look clean.
             </p>
           </div>
           <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-1">
             <Metric label="Casinos tracked" value={String(groups.length)} />
             <Metric label="Active codes" value={String(offers.length)} />
-            <Metric label="Avg confidence" value={offers.length ? `${averageConfidence}%` : "Pending"} />
+            <Metric label="Avg freshness" value={offers.length ? `${averageConfidence}%` : "Pending"} />
           </div>
         </div>
 
@@ -150,7 +155,7 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
             <input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search by casino, code, source, or offer"
+              placeholder="Search by casino, code, bonus type, or offer"
               className="min-h-12 w-full rounded-card border border-line bg-soft py-3 pl-11 pr-4 text-base text-ink outline-none transition focus:border-accent focus:bg-white focus:ring-4 focus:ring-accent/10"
             />
           </label>
@@ -167,7 +172,7 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
         <div className="grid gap-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="m-0 text-xs font-black uppercase tracking-wide text-accent-dark">Top codes</p>
+              <p className="m-0 text-xs font-black uppercase tracking-wide text-accent-dark">Source-checked codes</p>
               <h2 className="m-0 text-2xl font-black text-navy">
                 {filteredOffers.length ? `${filteredOffers.length} code${filteredOffers.length === 1 ? "" : "s"} found` : "No matching codes yet"}
               </h2>
@@ -203,7 +208,7 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
                     className="grid gap-3 rounded-card border border-line bg-soft p-3 hover:border-slate-300 hover:bg-white hover:no-underline"
                   >
                     <div className="flex items-center gap-3">
-                      <CasinoLogo text={group.casino.logoText} iconConfig={group.casino.logoIcon} size="sm" />
+                      <CasinoIcon casinoSlug={group.casino.slug} text={group.casino.logoText} iconConfig={group.casino.logoIcon} size="sm" />
                       <div>
                         <strong className="block text-navy">{group.casino.name}</strong>
                         <span className="text-xs text-muted">
@@ -225,11 +230,11 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
 
           <section className="rounded-card border border-line bg-navy p-5 text-white shadow-sm">
             <p className="mb-2 text-xs font-black uppercase tracking-wide text-emerald-200">Evidence model</p>
-            <h2 className="text-xl font-black">What confidence means</h2>
+            <h2 className="text-xl font-black">What freshness means</h2>
             <div className="mt-4 grid gap-3 text-sm text-slate-200">
-              <EvidenceRow icon={faShieldHalved} title="Source type" body="Owned and configured codes start higher than public-page findings." />
+              <EvidenceRow icon={faShieldHalved} title="Source checked" body="Public pages show only codes that have been marked reviewed, active, and source-labeled." />
               <EvidenceRow icon={faClock} title="Freshness" body="Recent checks score higher. Old codes drift into needs-check." />
-              <EvidenceRow icon={faGaugeHigh} title="Priority" body="Researcher priority and source signals lift stronger candidates." />
+              <EvidenceRow icon={faGaugeHigh} title="Priority" body="Higher-value and recently checked offers appear first." />
             </div>
           </section>
         </aside>
@@ -244,11 +249,11 @@ export function PromoCodeExplorer({ groups }: PromoCodeExplorerProps) {
               <div key={`activity-${casino.slug}-${promo.id}`} className="rounded-card border border-line bg-soft p-4">
                 <span className="inline-flex items-center gap-2 text-xs font-black uppercase tracking-wide text-accent-dark">
                   <FontAwesomeIcon icon={faCheckCircle} className="h-3.5 w-3.5" aria-hidden="true" />
-                  {confidence >= 80 ? "Strong signal" : "Needs review"}
+                  {confidence >= 80 ? "Recently checked" : "Needs review"}
                 </span>
                 <p className="mt-2 font-black text-navy">{promo.code}</p>
                 <p className="m-0 text-sm text-muted">
-                  {casino.name} · {promo.sourceId || promo.source} · {formatDate(promo.lastCheckedAt)}
+                  {casino.name} - {promo.bonusType || "Offer"} - {formatDate(promo.lastCheckedAt)}
                 </p>
               </div>
             ))}
@@ -289,12 +294,13 @@ function OfferCard({
   offer: { casino: Casino; affiliateLink: string | null; promo: DisplayPromoCode; confidence: number };
   rank: number;
 }) {
-  const [revealed, setRevealed] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
   const { casino, affiliateLink, promo, confidence } = offer;
 
-  async function revealAndCopy() {
-    setRevealed(true);
+  async function copyAndPrompt() {
+    trackPromoCodeClick({ casinoName: casino.name, casinoSlug: casino.slug, promoCode: promo.code, source: "promo-explorer-card" });
+    setModalOpen(true);
 
     try {
       await navigator.clipboard.writeText(promo.code);
@@ -310,7 +316,7 @@ function OfferCard({
       <div className="grid gap-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="flex min-w-0 items-center gap-3">
-            <CasinoLogo text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
+            <CasinoIcon casinoSlug={casino.slug} text={casino.logoText} iconConfig={casino.logoIcon} size="sm" />
             <div>
               <div className="mb-1 flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-black text-slate-700">#{rank}</span>
@@ -318,11 +324,16 @@ function OfferCard({
                   {confidence}% confidence
                 </span>
                 <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-black text-blue-900">
-                  {promo.isAffiliateOwned ? "Configured" : promo.sourceId || promo.source}
+                  Source checked
                 </span>
+                {expiresSoon(promo.validUntil) ? (
+                  <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-900">
+                    Expires soon
+                  </span>
+                ) : null}
               </div>
               <h3 className="text-xl font-black text-navy">{casino.name}</h3>
-              <p className="m-0 text-sm text-muted">{promo.description || promo.label}</p>
+              <p className="m-0 text-sm text-muted">{promo.benefitDescription || promo.description || promo.label}</p>
             </div>
           </div>
           <strong className="text-2xl text-navy">{getPromoValue(promo)}</strong>
@@ -330,25 +341,30 @@ function OfferCard({
 
         <div className="grid gap-3 md:grid-cols-3">
           <Fact label="Last checked" value={formatDate(promo.lastCheckedAt)} />
-          <Fact label="Source" value={promo.sourceId || promo.source} />
-          <Fact label="Terms" value={promo.conditions || "Check on casino site"} />
+          <Fact label="Bonus type" value={promo.bonusType || "Offer"} />
+          <Fact label="Expires" value={promo.validUntil ? formatDate(promo.validUntil) : "No expiry listed"} />
         </div>
       </div>
 
       <div className="grid gap-3">
-        <div className="rounded-card border border-dashed border-amber-500 bg-amber-50 p-3 text-center">
-          <p className="m-0 text-xs font-black uppercase tracking-wide text-amber-900">Promo code</p>
-          <p className="mt-1 text-2xl font-black text-amber-950">{revealed ? promo.code : maskCode(promo.code)}</p>
-        </div>
         <button
           type="button"
-          onClick={revealAndCopy}
+          onClick={copyAndPrompt}
+          className="rounded-card border border-dashed border-amber-500 bg-amber-50 p-3 text-center transition hover:-translate-y-0.5 hover:bg-amber-100 focus:outline-none focus:ring-4 focus:ring-amber-300/30 dark:bg-amber-400/10 dark:hover:bg-amber-400/20"
+        >
+          <p className="m-0 text-xs font-black uppercase tracking-wide text-amber-900">Promo code</p>
+          <p className="mt-1 text-2xl font-black text-amber-950 dark:text-amber-100">{promo.code}</p>
+          <p className="mt-1 text-xs font-bold text-amber-900 dark:text-amber-200">{copied ? "Copied. Registration details opened." : "Click to copy"}</p>
+        </button>
+        <button
+          type="button"
+          onClick={copyAndPrompt}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-card bg-navy px-4 py-3 text-sm font-extrabold text-white transition hover:bg-slate-800"
         >
           <FontAwesomeIcon icon={faClipboard} className="h-4 w-4" aria-hidden="true" />
-          {copied ? "Copied" : revealed ? "Copy code" : "Show code"}
+          {copied ? "Copied" : "Copy code"}
         </button>
-        <AffiliateButton casinoName={casino.name} affiliateLink={affiliateLink} promoCode={promo.code} label="View offer" />
+        <AffiliateButton casinoName={casino.name} casinoSlug={casino.slug} affiliateLink={affiliateLink} promoCode={promo.code} source="promo-explorer-card" label="Open site only" />
         <Link
           href={`/casinos/${casino.slug}/promos`}
           className="inline-flex min-h-11 items-center justify-center gap-2 rounded-card border border-line bg-white px-4 py-3 text-sm font-extrabold text-blue-800 transition hover:bg-blue-50 hover:no-underline"
@@ -356,6 +372,16 @@ function OfferCard({
           Details
           <FontAwesomeIcon icon={faArrowUpRightFromSquare} className="h-3.5 w-3.5" aria-hidden="true" />
         </Link>
+        <PromoRegistrationModal
+          affiliateLink={affiliateLink}
+          casinoName={casino.name}
+          casinoSlug={casino.slug}
+          casinoSummary={casino.summary}
+          copied={copied}
+          onClose={() => setModalOpen(false)}
+          open={modalOpen}
+          promo={promo}
+        />
       </div>
     </article>
   );
@@ -398,7 +424,7 @@ function EmptyCodes({ groups }: { groups: PromoGroup[] }) {
             href={`/casinos/${group.casino.slug}`}
             className="flex items-center gap-3 rounded-card border border-line bg-soft p-3 hover:bg-white hover:no-underline"
           >
-            <CasinoLogo text={group.casino.logoText} iconConfig={group.casino.logoIcon} size="sm" />
+            <CasinoIcon casinoSlug={group.casino.slug} text={group.casino.logoText} iconConfig={group.casino.logoIcon} size="sm" />
             <div>
               <strong className="block text-navy">{group.casino.name}</strong>
               <span className="text-sm text-muted">Review profile</span>

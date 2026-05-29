@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ContactForm } from "@/components/ContactForm";
 import { SectionHeader } from "@/components/SectionHeader";
+import { SocialLinks } from "@/components/SocialLinks";
 
 export const metadata: Metadata = {
   title: "Contact"
@@ -28,6 +29,10 @@ export default function ContactPage() {
               <p><strong className="text-navy">Partnerships:</strong> partners@promoguard.example</p>
               <p><strong className="text-navy">Legal entity:</strong> Add registered business details before launch.</p>
               <p><strong className="text-navy">Address:</strong> Add business address or registered agent details.</p>
+            </div>
+            <div className="mt-6 rounded-card bg-slate-950 p-4">
+              <p className="mb-3 text-sm font-black uppercase tracking-wide text-slate-300">Community</p>
+              <SocialLinks showLabels />
             </div>
           </aside>
         </div>

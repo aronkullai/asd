@@ -16,9 +16,8 @@ export type CasinoAffiliateConfig = {
    */
   affiliateLink: string;
   /**
-   * Paste your affiliate-owned promo codes here if you have them.
-   * Leave undefined or [] when you do not have a code; the UI will hide
-   * affiliate promo code blocks instead of showing placeholders.
+   * Legacy field kept for compatibility. Add real public promo codes in
+   * /admin/promos/edit so verification, date ranges, and audit logs apply.
    */
   affiliatePromoCodes?: AffiliatePromoCode[];
   notes?: string;
@@ -71,6 +70,24 @@ export const affiliateConfig: CasinoAffiliateConfig[] = [
     name: "Bitcasino",
     slug: "bitcasino",
     affiliateLink: "bitcasino.io/ref/U0E2WDTAZDSI",
+    affiliatePromoCodes: []
+  },
+  {
+    name: "Gamdom",
+    slug: "gamdom",
+    affiliateLink: "https://gamdom.com/r/weluvgambling?to=/casino",
+    affiliatePromoCodes: []
+  },
+  {
+    name: "JustCasino",
+    slug: "justcasino",
+    affiliateLink: "https://www.justcasino.casino?ref_code=PromoGuard",
+    affiliatePromoCodes: []
+  },
+  {
+    name: "BetPanda",
+    slug: "betpanda",
+    affiliateLink: "https://betpandacasino.io/?referral=LMLLMN9&type=registration&modal=user&isReferral=true",
     affiliatePromoCodes: []
   }
 ];

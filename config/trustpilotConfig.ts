@@ -27,7 +27,10 @@ export const trustpilotConfig: CasinoTrustpilotConfig[] = [
   { slug: "spartans-casino", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "PASTE_DOMAIN_HERE", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
   { slug: "shuffle", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "PASTE_DOMAIN_HERE", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
   { slug: "bc-game", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "PASTE_DOMAIN_HERE", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
-  { slug: "bitcasino", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "PASTE_DOMAIN_HERE", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" }
+  { slug: "bitcasino", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "PASTE_DOMAIN_HERE", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
+  { slug: "gamdom", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "gamdom.com", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
+  { slug: "justcasino", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "justcasino.casino", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" },
+  { slug: "betpanda", businessUnitId: "PASTE_BUSINESS_UNIT_ID_HERE", domain: "betpandacasino.io", profileUrl: "PASTE_TRUSTPILOT_PROFILE_URL_HERE" }
 ];
 
 export function getTrustpilotConfigBySlug(slug: string) {

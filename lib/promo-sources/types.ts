@@ -1,19 +1,9 @@
 import type { Casino } from "@/lib/types";
+import type { PromoCodeInput } from "@/lib/promo-code-validation";
 
-export type ExternalPromoCodeResult = {
-  code: string;
-  label: string;
-  description?: string;
-  conditions?: string;
-  discoveredAt: string;
-  sourceId: string;
-  estimatedValue?: number;
-  priority?: number;
-  validFrom?: string;
-  validUntil?: string;
-};
-
-export type ExternalPromoSource = {
+export type PromoSourceProvider = {
   id: string;
-  fetchCodesForCasino: (casino: Casino, context?: { sourceUrls?: string[] }) => Promise<ExternalPromoCodeResult[]>;
+  label: string;
+  fetchPromoCodesForCasino: (casino: Casino) => Promise<PromoCodeInput[]>;
 };
+
