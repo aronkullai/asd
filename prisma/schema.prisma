@@ -1,0 +1,108 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Casino {
+  id                    String           @id @default(cuid())
+  name                  String
+  slug                  String           @unique
+  affiliateLink         String
+  trustpilotProfileUrl  String
+  promoFetchSourceType  String           @default("manual")
+  promoFetchSourceUrl   String
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  promoCodes            PromoCode[]
+  reviews               Review[]
+  trustpilotMeta        TrustpilotMeta?
+  promoCodeChanges      PromoCodeChange[]
+}
+
+model PromoCode {
+  id             String            @id
+  casinoId       String?
+  casinoSlug     String
+  casino         Casino            @relation(fields: [casinoSlug], references: [slug], onDelete: Cascade)
+  code           String
+  label          String
+  benefit        String
+  description    String?
+  conditions     String?
+  source         String            @default("external")
+  sourceId       String            @default("External")
+  isAffiliateOwned Boolean         @default(false)
+  priority       Int               @default(0)
+  estimatedValue Int?
+  requirements   String
+  validFrom      DateTime?
+  validUntil     DateTime?
+  isActive       Boolean           @default(true)
+  discoveredAt   DateTime          @default(now())
+  lastCheckedAt  DateTime
+  lastUpdatedAt  DateTime
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  changes        PromoCodeChange[]
+  history        PromoCodeHistory[]
+
+  @@unique([casinoSlug, code, sourceId])
+}
+
+model Review {
+  id            String   @id @default(cuid())
+  casinoSlug    String
+  casino        Casino   @relation(fields: [casinoSlug], references: [slug], onDelete: Cascade)
+  reviewerName  String
+  rating        Int
+  text          String
+  reviewedAt    DateTime
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model TrustpilotMeta {
+  id             String   @id @default(cuid())
+  casinoSlug     String   @unique
+  casino         Casino   @relation(fields: [casinoSlug], references: [slug], onDelete: Cascade)
+  businessUnitId String?
+  score          String
+  stars          String?
+  reviewCount    String
+  profileUrl     String
+  latestReviews  Json?
+  lastFetchedAt  DateTime?
+  lastUpdatedAt  DateTime
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model PromoCodeChange {
+  id           String    @id @default(cuid())
+  casinoSlug   String
+  casino       Casino    @relation(fields: [casinoSlug], references: [slug], onDelete: Cascade)
+  promoCodeId  String?
+  promoCode    PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  oldCode      String?
+  newCode      String
+  changeType   String
+  createdAt    DateTime  @default(now())
+}
+
+model PromoCodeHistory {
+  id            String    @id @default(cuid())
+  promoCodeId   String?
+  promoCode     PromoCode? @relation(fields: [promoCodeId], references: [id], onDelete: SetNull)
+  casinoSlug    String
+  code          String
+  sourceId      String
+  action        String
+  before        Json?
+  after         Json?
+  message       String?
+  createdAt     DateTime  @default(now())
+}
