@@ -9,15 +9,18 @@ import { RatingStars } from "@/components/RatingStars";
 import { ReviewList } from "@/components/ReviewList";
 import { TrustpilotReviewList } from "@/components/TrustpilotReviewList";
 import { TrustpilotBadge } from "@/components/TrustpilotBadge";
-import { casinos, getCasinoBySlug, getReviewsForCasino } from "@/lib/casino-data";
+import { casinos, getCasinoBySlug } from "@/lib/casino-data";
 import { formatDate, payoutSpeedLabel } from "@/lib/format";
 import { getBestPromoCodesForCasinoWithDb } from "@/lib/promo-code-db";
 import { getConfiguredAffiliateLink } from "@/lib/promo-code-service";
+import { getPublishedReviewsForCasino } from "@/lib/review-service";
 import { getCachedBusinessUnitSummary, getCachedLatestReviews } from "@/lib/trustpilot";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
 };
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return casinos.map((casino) => ({ slug: casino.slug }));
@@ -27,7 +30,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const { slug } = await params;
   const casino = getCasinoBySlug(slug);
   return {
-    title: casino ? `${casino.name} review` : "Casino review"
+    title: casino ? `${casino.name} review` : "Casino review",
+    description: casino?.summary,
+    alternates: casino ? { canonical: `/casinos/${casino.slug}` } : undefined,
+    openGraph: casino
+      ? {
+          title: `${casino.name} review | PromoGuard`,
+          description: casino.summary,
+          url: `https://promoguard.bet/casinos/${casino.slug}`
+        }
+      : undefined
   };
 }
 
@@ -40,7 +52,7 @@ export default async function CasinoDetailPage({ params }: PageProps) {
   const promos = await getBestPromoCodesForCasinoWithDb(casino.slug);
   const affiliateLink = getConfiguredAffiliateLink(casino.slug);
   const topPromo = promos[0];
-  const internalReviews = getReviewsForCasino(casino.slug);
+  const internalReviews = await getPublishedReviewsForCasino(casino.slug);
   const trustpilotSummary = await getCachedBusinessUnitSummary(casino.slug);
   const trustpilotReviews = await getCachedLatestReviews(casino.slug, 5);
 
@@ -138,7 +150,7 @@ export default async function CasinoDetailPage({ params }: PageProps) {
             <TrustpilotReviewList reviews={trustpilotReviews} profileUrl={trustpilotSummary?.profileUrl} />
           </Section>
 
-          <Section id="reviews" title="PromoGuard user reviews">
+          <Section id="reviews" title="What players say">
             <ReviewList reviews={internalReviews} />
           </Section>
 

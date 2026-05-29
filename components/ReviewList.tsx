@@ -1,5 +1,7 @@
+import Link from "next/link";
 import { RatingStars } from "@/components/RatingStars";
 import { formatDate } from "@/lib/format";
+import { getReviewStats } from "@/lib/review-service";
 import type { Review } from "@/lib/types";
 
 type ReviewListProps = {
@@ -7,23 +9,18 @@ type ReviewListProps = {
 };
 
 export function ReviewList({ reviews }: ReviewListProps) {
-  const average = reviews.length
-    ? reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length
-    : 0;
-
-  const distribution = [5, 4, 3, 2, 1].map((rating) => ({
-    rating,
-    count: reviews.filter((review) => review.rating === rating).length
-  }));
+  const { average, distribution, total } = getReviewStats(reviews);
+  const highlighted = [...reviews].sort((a, b) => Number(b.isHighlighted) - Number(a.isHighlighted)).slice(0, 6);
 
   return (
     <div className="grid gap-5 lg:grid-cols-[280px_1fr]">
       <aside className="rounded-card border border-line bg-white p-5 shadow-sm">
-        <p className="text-sm font-black uppercase tracking-wide text-muted">PromoGuard user rating</p>
+        <p className="text-sm font-black uppercase tracking-wide text-muted">Player review signal</p>
         <div className="mt-2 flex items-baseline gap-2">
           <strong className="text-4xl text-navy">{average ? average.toFixed(1) : "N/A"}</strong>
           <span className="text-muted">/ 5</span>
         </div>
+        <p className="mt-1 text-sm text-muted">{total ? `Based on ${total} pasted or internal review${total === 1 ? "" : "s"}` : "No reviews yet"}</p>
         <div className="mt-3">
           <RatingStars ratingOutOf5={average} />
         </div>
@@ -45,19 +42,32 @@ export function ReviewList({ reviews }: ReviewListProps) {
 
       <div className="grid gap-3">
         <div className="rounded-card border border-blue-100 bg-blue-50 p-4 text-sm text-blue-950">
-          Trustpilot reviews are referenced externally. Reviews shown here are separate internal PromoGuard reviews and should be moderated before publication.
+          Reviews shown here are manually added by PromoGuard admins or collected internally. External sources link back to the original page when available.
         </div>
-        {reviews.length ? (
-          reviews.map((review) => (
+        {highlighted.length ? (
+          highlighted.map((review) => (
             <article key={review.id} className="rounded-card border border-line bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="m-0 font-black text-navy">{review.reviewerName}</h3>
-                  <p className="m-0 text-sm text-muted">{formatDate(review.date)}</p>
+                  <div className="mb-2 flex flex-wrap gap-2">
+                    <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-black text-accent-dark">
+                      From {review.source || "PromoGuard users"}
+                    </span>
+                    {review.isHighlighted ? <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-black text-amber-900">Highlighted</span> : null}
+                  </div>
+                  <h3 className="m-0 font-black text-navy">{review.title || review.authorName || review.reviewerName}</h3>
+                  <p className="m-0 text-sm text-muted">{review.authorName || review.reviewerName} · {formatDate(review.date)}</p>
                 </div>
                 <RatingStars ratingOutOf5={review.rating} label={`${review.rating} out of 5 stars`} />
               </div>
-              <p className="mb-0 mt-3 text-muted">{review.text}</p>
+              <blockquote className="mt-4 border-l-4 border-accent/70 pl-4 text-muted">
+                {review.body || review.text}
+              </blockquote>
+              {review.externalUrl ? (
+                <Link href={review.externalUrl} target="_blank" rel="noopener nofollow" className="mt-4 inline-flex text-sm font-extrabold text-blue-800">
+                  Read full review on {review.source || "source"} →
+                </Link>
+              ) : null}
             </article>
           ))
         ) : (

@@ -8,6 +8,8 @@ export const metadata: Metadata = {
   title: "Promo codes"
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function PromosPage() {
   const groups = await Promise.all(
     casinos.map(async (casino) => ({

@@ -9,6 +9,8 @@ export const metadata: Metadata = {
   title: "Casino reviews"
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function CasinosPage() {
   const promoEntries = await Promise.all(
     casinos.map(async (casino) => [casino.slug, await getBestPromoCodesForCasinoWithDb(casino.slug)] as const)

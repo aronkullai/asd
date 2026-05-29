@@ -4,6 +4,34 @@
 
 :root {
   color-scheme: light;
+  --pg-bg: #ffffff;
+  --pg-bg-soft: #f6f8fb;
+  --pg-surface: #ffffff;
+  --pg-surface-raised: #ffffff;
+  --pg-ink: #17212b;
+  --pg-navy: #0b1f33;
+  --pg-muted: #5f6f80;
+  --pg-line: #d8e1ea;
+  --pg-accent: #1f9d7a;
+  --pg-accent-dark: #14755b;
+  --pg-blue-link: #1e40af;
+  --pg-focus: rgba(31, 157, 122, 0.28);
+}
+
+.dark {
+  color-scheme: dark;
+  --pg-bg: #111318;
+  --pg-bg-soft: #16191f;
+  --pg-surface: #1b1f27;
+  --pg-surface-raised: #222733;
+  --pg-ink: #e5e7eb;
+  --pg-navy: #f3f4f6;
+  --pg-muted: #a8b0bd;
+  --pg-line: #303744;
+  --pg-accent: #5fcba9;
+  --pg-accent-dark: #86e0c1;
+  --pg-blue-link: #93c5fd;
+  --pg-focus: rgba(95, 203, 169, 0.36);
 }
 
 * {
@@ -16,8 +44,8 @@ html {
 
 body {
   margin: 0;
-  background: #ffffff;
-  color: #17212b;
+  background: var(--pg-bg);
+  color: var(--pg-ink);
 }
 
 a {
@@ -33,4 +61,87 @@ textarea {
 
 ::selection {
   background: rgba(31, 157, 122, 0.2);
+}
+
+*:focus-visible {
+  outline: 3px solid var(--pg-focus);
+  outline-offset: 2px;
+}
+
+.dark .bg-white {
+  background-color: var(--pg-surface);
+}
+
+.dark .bg-soft,
+.dark .bg-slate-50,
+.dark .bg-slate-100 {
+  background-color: var(--pg-bg-soft);
+}
+
+.dark .bg-blue-50,
+.dark .bg-emerald-50,
+.dark .bg-amber-50 {
+  background-color: var(--pg-surface-raised);
+}
+
+.dark .bg-gradient-to-br {
+  background-image: linear-gradient(135deg, var(--pg-bg) 0%, var(--pg-bg-soft) 55%, #182b27 100%);
+}
+
+.dark .text-navy,
+.dark .text-ink,
+.dark .text-blue-950,
+.dark .text-emerald-950,
+.dark .text-amber-950,
+.dark .text-slate-700,
+.dark .text-slate-800,
+.dark .text-slate-900 {
+  color: var(--pg-navy);
+}
+
+.dark .text-muted,
+.dark .text-slate-400,
+.dark .text-slate-500,
+.dark .text-slate-600 {
+  color: var(--pg-muted);
+}
+
+.dark .text-blue-800,
+.dark .text-blue-900 {
+  color: var(--pg-blue-link);
+}
+
+.dark .text-accent,
+.dark .text-accent-dark,
+.dark .text-emerald-900 {
+  color: var(--pg-accent-dark);
+}
+
+.dark .text-amber-900 {
+  color: #f8d48a;
+}
+
+.dark .border-line,
+.dark .border-blue-100,
+.dark .border-emerald-200,
+.dark .border-amber-200,
+.dark .border-slate-300 {
+  border-color: var(--pg-line);
+}
+
+.dark input,
+.dark select,
+.dark textarea {
+  background-color: var(--pg-bg-soft);
+  border-color: var(--pg-line);
+  color: var(--pg-ink);
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #778293;
+}
+
+.dark table thead {
+  background-color: var(--pg-bg-soft);
 }

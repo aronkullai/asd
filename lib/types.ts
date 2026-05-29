@@ -84,10 +84,17 @@ export type TrustpilotReview = {
 export type Review = {
   id: string;
   casinoSlug: string;
+  source?: string;
   reviewerName: string;
+  authorName?: string | null;
   rating: number;
+  title?: string | null;
+  body?: string | null;
   date: string;
   text: string;
+  externalUrl?: string | null;
+  isHighlighted?: boolean;
+  adminNote?: string | null;
 };
 
 export type Casino = {

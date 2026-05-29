@@ -58,11 +58,21 @@ model Review {
   casinoSlug    String
   casino        Casino   @relation(fields: [casinoSlug], references: [slug], onDelete: Cascade)
   reviewerName  String
+  source        String   @default("PromoGuard user")
+  authorName    String?
   rating        Int
+  title         String?
+  body          String?
   text          String
   reviewedAt    DateTime
+  externalUrl   String?
+  isHighlighted Boolean  @default(false)
+  adminNote     String?
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
+
+  @@index([casinoSlug, source])
+  @@index([casinoSlug, isHighlighted])
 }
 
 model TrustpilotMeta {

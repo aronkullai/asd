@@ -13,6 +13,8 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
+export const dynamic = "force-dynamic";
+
 export function generateStaticParams() {
   return casinos.map((casino) => ({ slug: casino.slug }));
 }

@@ -12,7 +12,7 @@ export function TrustpilotReviewList({ reviews, profileUrl }: TrustpilotReviewLi
   if (!reviews?.length) {
     return (
       <div className="rounded-card border border-dashed border-line bg-soft p-5 text-muted">
-        Trustpilot review excerpts are not available yet. Add Trustpilot API credentials and Business Unit IDs to enable this section.
+        Trustpilot excerpts are not connected to an API. Paste curated reviews in the admin review manager and link back to the original Trustpilot page.
       </div>
     );
   }
@@ -20,7 +20,7 @@ export function TrustpilotReviewList({ reviews, profileUrl }: TrustpilotReviewLi
   return (
     <div className="grid gap-4">
       <div className="rounded-card border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-950">
-        These are Trustpilot reviews fetched from Trustpilot. They are separate from PromoGuard internal user reviews.
+        These are external review excerpts stored by PromoGuard admins. Always follow the original source link for full context.
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {reviews.map((review) => (
