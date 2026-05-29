@@ -11,7 +11,8 @@ export function NordVpnReferral({ compact = false }: { compact?: boolean }) {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex gap-3">
           <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-card border border-line bg-white">
-            <Image src="/icons/social/nordvpn.png" alt="" width={36} height={36} className="object-contain" />
+            <Image src="/icons/social/l_nordvpn.png" alt="" width={36} height={36} className="object-contain dark:hidden" />
+            <Image src="/icons/social/d_nordvpn.png" alt="" width={36} height={36} className="hidden object-contain dark:block" />
           </span>
           <div>
             <h2 className={`${compact ? "text-base" : "text-xl"} font-black text-navy`}>Private browsing partner</h2>

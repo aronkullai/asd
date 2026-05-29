@@ -224,7 +224,8 @@ l_telegram.png
 d_telegram.png
 l_x.png
 d_x.png
-nordvpn.png
+l_nordvpn.png
+d_nordvpn.png
 ```
 
 Rendering is handled by:
@@ -255,7 +256,8 @@ components/NordVpnReferral.tsx
 It uses:
 
 ```text
-public/icons/social/nordvpn.png
+public/icons/social/l_nordvpn.png
+public/icons/social/d_nordvpn.png
 ```
 
 Set this variable in Vercel to activate the referral CTA:
